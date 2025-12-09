@@ -38,7 +38,8 @@ student_parking_violation(_Lot, _Hour,
                           _CurbColor, _InDisabledSpace,
                           _SpecialZone, _IsLoading,
                           no_valid_student_permit) :-
-    HasStudentPermit \== true.
+    HasStudentPermit \== true,
+    !.
 
 % must be in one of the student lots
 student_parking_violation(Lot, _Hour,
