@@ -3,6 +3,8 @@
     overnight_violation/5
 ]).
 
+% Facts
+
 overnight_lot(s8).
 overnight_lot(e7).
 
@@ -12,6 +14,12 @@ overnight_hour(Hour) :-
     Hour < 6.
 
 storage_limit_hours(72).
+
+% Rules
+
+
+%  applies during overnight hours. Outside of those
+%  hours this predicate simply fails (overnight rule not applicable).
 
 may_park_overnight(Lot, time(_Date, Hour), HasValidPermit) :-
     overnight_hour(Hour),
