@@ -23,6 +23,7 @@ No Node, npm, or frameworks are required – the frontend is a plain HTML file.
 ├── parking_logic.pl        % decision tree + next_step/2 API
 ├── server.pl               % SWI-Prolog HTTP server
 └── index.html              % sliding-card frontend UI
+```
 
 ## 3. Running the App
 
@@ -30,7 +31,6 @@ No Node, npm, or frameworks are required – the frontend is a plain HTML file.
 
 ```
 swipl -s server.pl -g start
-
 ```
 
 2. Open http://localhost:4000/ to access the working app
