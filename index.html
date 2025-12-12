@@ -1,349 +1,410 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Parking Eligibility Checker</title>
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #f8fafc; /* soft white/gray */
-      color: #0f172a;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-    }
-    .app {
-      width: 100%;
-      max-width: 640px;
-      padding: 24px;
-    }
-    .card-wrapper {
-      position: relative;
-      overflow: hidden;
-      height: 240px;
-    }
-    .card {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      padding: 24px 24px 32px;
-      background: #ffffff;
-      border-radius: 20px;
-      box-shadow: 0 18px 45px rgba(15,23,42,0.08);
-      transform: translateX(0);
-      opacity: 1;
-      transition: transform 0.35s ease, opacity 0.35s ease;
-    }
-    .card-title {
-      font-size: 1.1rem;
-      margin-bottom: 16px;
-      font-weight: 600;
-    }
-    .card-body {
-      margin-bottom: 24px;
-    }
-    .options {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 8px;
-    }
-    .option-btn {
-      border-radius: 999px;
-      border: 1px solid #e2e8f0;
-      padding: 8px 16px;
-      background: #ffffff;
-      cursor: pointer;
-      font-size: 0.9rem;
-    }
-    .option-btn.selected {
-      border-color: #0f172a;
-      background: #0f172a;
-      color: #ffffff;
-    }
-    .input-control input {
-      width: 100%;
-      padding: 8px 10px;
-      font-size: 0.95rem;
-      border-radius: 10px;
-      border: 1px solid #e2e8f0;
-    }
-    .card-footer {
-      display: flex;
-      justify-content: space-between;
-      gap: 8px;
-    }
-    button.nav {
-      padding: 8px 16px;
-      border-radius: 999px;
-      border: none;
-      font-size: 0.9rem;
-      cursor: pointer;
-    }
-    .btn-secondary {
-      background: #e2e8f0;
-      color: #0f172a;
-    }
-    .btn-primary {
-      background: #0f172a;
-      color: #ffffff;
-    }
-
-    /* slide animations */
-    .slide-in-right   { transform: translateX(40px); opacity: 0; }
-    .slide-in-active  { transform: translateX(0); opacity: 1; }
-    .slide-out-left   { transform: translateX(-40px); opacity: 0; }
-    .slide-out-right  { transform: translateX(40px); opacity: 0; }
-
-    .result-status {
-      font-weight: 600;
-      margin-bottom: 6px;
-    }
-    .result-status.ok { color: #16a34a; }
-    .result-status.violation { color: #dc2626; }
-  </style>
-</head>
-<body>
-  <div class="app">
-    <h1 style="font-size:1.5rem; margin-bottom:16px;">Parking Eligibility Checker</h1>
-    <p style="margin-bottom:20px; color:#64748b;">
-      Answer a few quick questions to see if you’re allowed to park in your chosen spot.
-    </p>
-    <div class="card-wrapper" id="cardWrapper"></div>
-  </div>
-
-  <script>
-    const API_URL = "/next";
-
-    let answers = {};
-    let history = [];
-    let currentQuestion = null;
-    let currentValue = null;
-
-    const cardWrapper = document.getElementById("cardWrapper");
-
-    async function fetchNext() {
-      try {
-        console.log("Sending answers:", answers);
-        const res = await fetch(API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ answers })
-        });
-
-        if (!res.ok) {
-          const text = await res.text();
-          console.error("Server error:", res.status, text);
-          throw new Error("Server error " + res.status);
-        }
-
-        const data = await res.json();
-        console.log("API /next response:", data);
-        return data;
-      } catch (err) {
-        console.error("Fetch error:", err);
-        showErrorCard("Could not contact the Prolog server. Is it running on port 4000?");
-        throw err;
+  <head>
+    <meta charset="UTF-8" />
+    <title>Parking Violation Checker</title>
+    <style>
+      * {
+        box-sizing: border-box;
       }
-    }
-
-    function showErrorCard(msg) {
-      const card = document.createElement("div");
-      card.className = "card slide-in-right";
-      const title = document.createElement("div");
-      title.className = "card-title";
-      title.textContent = "Error";
-      card.appendChild(title);
-
-      const body = document.createElement("div");
-      body.className = "card-body";
-      body.textContent = msg;
-      card.appendChild(body);
-
-      cardWrapper.innerHTML = "";
-      cardWrapper.appendChild(card);
-    }
-
-    function createQuestionCard(q) {
-      const card = document.createElement("div");
-      card.className = "card slide-in-right";
-
-      const title = document.createElement("div");
-      title.className = "card-title";
-      title.textContent = q.text;
-      card.appendChild(title);
-
-      const body = document.createElement("div");
-      body.className = "card-body";
-
-      if (q.inputType === "select") {
-        const optionsWrap = document.createElement("div");
-        optionsWrap.className = "options";
-        (q.options || []).forEach(opt => {
-          const btn = document.createElement("button");
-          btn.type = "button";
-          btn.className = "option-btn";
-          btn.textContent = opt.toString();
-          btn.onclick = () => {
-            currentValue = opt;
-            [...optionsWrap.children].forEach(c => c.classList.remove("selected"));
-            btn.classList.add("selected");
-          };
-          optionsWrap.appendChild(btn);
-        });
-        body.appendChild(optionsWrap);
-      } else {
-        const inputDiv = document.createElement("div");
-        inputDiv.className = "input-control";
-        const input = document.createElement("input");
-        input.type = q.inputType === "number" ? "number" : "text";
-        input.oninput = e => {
-          currentValue = (q.inputType === "number")
-            ? Number(e.target.value)
-            : e.target.value;
-        };
-        inputDiv.appendChild(input);
-        body.appendChild(inputDiv);
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        background: #f8fafc; /* soft white/gray */
+        color: #0f172a;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+      }
+      .app {
+        width: 100%;
+        max-width: 640px;
+        padding: 24px;
+      }
+      .card-wrapper {
+        position: relative;
+        overflow: hidden;
+        height: 240px;
+      }
+      .card {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        padding: 24px 24px 32px;
+        background: #ffffff;
+        border-radius: 20px;
+        box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+        transform: translateX(0);
+        opacity: 1;
+        transition: transform 0.35s ease, opacity 0.35s ease;
+      }
+      .card-title {
+        font-size: 1.1rem;
+        margin-bottom: 16px;
+        font-weight: 600;
+      }
+      .card-body {
+        margin-bottom: 24px;
+      }
+      .options {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+      .option-btn {
+        border-radius: 999px;
+        border: 1px solid #e2e8f0;
+        padding: 8px 16px;
+        background: #ffffff;
+        cursor: pointer;
+        font-size: 0.9rem;
+      }
+      .option-btn.selected {
+        border-color: #0f172a;
+        background: #0f172a;
+        color: #ffffff;
+      }
+      .input-control input {
+        width: 100%;
+        padding: 8px 10px;
+        font-size: 0.95rem;
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+      }
+      .card-footer {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      button.nav {
+        padding: 8px 16px;
+        border-radius: 999px;
+        border: none;
+        font-size: 0.9rem;
+        cursor: pointer;
+      }
+      .btn-secondary {
+        background: #e2e8f0;
+        color: #0f172a;
+      }
+      .btn-primary {
+        background: #0f172a;
+        color: #ffffff;
       }
 
-      card.appendChild(body);
+      /* slide animations */
+      .slide-in-right {
+        transform: translateX(40px);
+        opacity: 0;
+      }
+      .slide-in-active {
+        transform: translateX(0);
+        opacity: 1;
+      }
+      .slide-out-left {
+        transform: translateX(-40px);
+        opacity: 0;
+      }
+      .slide-out-right {
+        transform: translateX(40px);
+        opacity: 0;
+      }
 
-      const footer = document.createElement("div");
-      footer.className = "card-footer";
+      .result-status {
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+      .result-status.ok {
+        color: #16a34a;
+      }
+      .result-status.violation {
+        color: #dc2626;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <h1 style="font-size: 1.5rem; margin-bottom: 16px">
+        Parking Violation Checker
+      </h1>
+      <p style="margin-bottom: 20px; color: #64748b">
+        Answer a few quick questions
+      </p>
+      <div class="card-wrapper" id="cardWrapper"></div>
+    </div>
 
-      const backBtn = document.createElement("button");
-      backBtn.textContent = "Back";
-      backBtn.className = "nav btn-secondary";
-      backBtn.onclick = onBack;
-      backBtn.disabled = history.length === 0;
+    <script>
+      const API_URL = "/next";
 
-      const nextBtn = document.createElement("button");
-      nextBtn.textContent = "Next";
-      nextBtn.className = "nav btn-primary";
-      nextBtn.onclick = onNext;
+      const LABELS = {
+        // Boolean values
+        true: "Yes",
+        false: "No",
 
-      footer.appendChild(backBtn);
-      footer.appendChild(nextBtn);
-      card.appendChild(footer);
+        student: "Student",
+        faculty: "Faculty",
 
-      currentQuestion = q;
-      currentValue = null;
+        // Goal modes
+        check_parking_spot: "Check an eligible parking spot",
+        check_parked_car: "Check for a parking violation",
 
-      return card;
-    }
+        // Space types
+        regular: "Regular parking space",
+        disabled_space: "Disabled parking space",
 
-    function createResultCard(result) {
-      const card = document.createElement("div");
-      card.className = "card slide-in-right";
+        // Curb colors
+        none: "No curb color",
+        red: "Red curb",
+        blue: "Blue curb",
+        yellow: "Yellow curb",
+        white: "White curb",
 
-      const title = document.createElement("div");
-      title.className = "card-title";
-      title.textContent = "Result";
-      card.appendChild(title);
-
-      const body = document.createElement("div");
-      body.className = "card-body";
-
-      const status = document.createElement("div");
-      status.className = "result-status " + result.status;
-      status.textContent = result.status === "ok" ? "Parking Allowed" : "Parking Violation";
-      body.appendChild(status);
-
-      const msg = document.createElement("div");
-      msg.textContent = result.message;
-      body.appendChild(msg);
-
-      card.appendChild(body);
-
-      const footer = document.createElement("div");
-      footer.className = "card-footer";
-
-      const backBtn = document.createElement("button");
-      backBtn.textContent = "Back";
-      backBtn.className = "nav btn-secondary";
-      backBtn.onclick = onBack;
-      backBtn.disabled = history.length === 0;
-
-      const restartBtn = document.createElement("button");
-      restartBtn.textContent = "Start Over";
-      restartBtn.className = "nav btn-primary";
-      restartBtn.onclick = () => {
-        answers = {};
-        history = [];
-        loadFirst();
+        // Proximity objects
+        fire_hydrant: "Fire hydrant",
+        building_entrance: "Building entrance",
+        disabled_access_ramp: "Disabled access ramp",
       };
 
-      footer.appendChild(backBtn);
-      footer.appendChild(restartBtn);
-      card.appendChild(footer);
+      let answers = {};
+      let history = [];
+      let currentQuestion = null;
+      let currentValue = null;
 
-      currentQuestion = null;
-      currentValue = null;
+      const cardWrapper = document.getElementById("cardWrapper");
 
-      return card;
-    }
+      async function fetchNext() {
+        try {
+          console.log("Sending answers:", answers);
+          const res = await fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ answers }),
+          });
 
-    function showCard(newCard, direction = "forward") {
-      const oldCard = cardWrapper.firstElementChild;
-      if (oldCard) {
-        oldCard.classList.remove("slide-in-right", "slide-in-active");
-        oldCard.classList.add(direction === "forward" ? "slide-out-left" : "slide-out-right");
-        setTimeout(() => {
-          if (oldCard.parentNode) oldCard.parentNode.removeChild(oldCard);
-        }, 350);
+          if (!res.ok) {
+            const text = await res.text();
+            console.error("Server error:", res.status, text);
+            throw new Error("Server error " + res.status);
+          }
+
+          const data = await res.json();
+          console.log("API /next response:", data);
+          return data;
+        } catch (err) {
+          console.error("Fetch error:", err);
+          showErrorCard(
+            "Could not contact the Prolog server. Is it running on port 4000?"
+          );
+          throw err;
+        }
       }
-      cardWrapper.appendChild(newCard);
-      requestAnimationFrame(() => {
-        newCard.classList.remove("slide-in-right");
-        newCard.classList.add("slide-in-active");
-      });
-    }
 
-    async function loadFirst() {
-      const data = await fetchNext();
-      if (data.type === "question") {
-        showCard(createQuestionCard(data));
-      } else {
-        showCard(createResultCard(data));
+      function showErrorCard(msg) {
+        const card = document.createElement("div");
+        card.className = "card slide-in-right";
+        const title = document.createElement("div");
+        title.className = "card-title";
+        title.textContent = "Error";
+        card.appendChild(title);
+
+        const body = document.createElement("div");
+        body.className = "card-body";
+        body.textContent = msg;
+        card.appendChild(body);
+
+        cardWrapper.innerHTML = "";
+        cardWrapper.appendChild(card);
       }
-    }
 
-    async function onNext() {
-      if (!currentQuestion) return;
-      if (currentValue === null || currentValue === "") {
-        alert("Please select or fill in an answer.");
-        return;
+      function createQuestionCard(q) {
+        const card = document.createElement("div");
+        card.className = "card slide-in-right";
+
+        const title = document.createElement("div");
+        title.className = "card-title";
+        title.textContent = q.text;
+        card.appendChild(title);
+
+        const body = document.createElement("div");
+        body.className = "card-body";
+
+        if (q.inputType === "select") {
+          const optionsWrap = document.createElement("div");
+          optionsWrap.className = "options";
+          (q.options || []).forEach((opt) => {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "option-btn";
+
+            const label = LABELS[opt] || opt.toString().replace(/_/g, " ");
+
+            btn.textContent = label;
+
+            btn.onclick = () => {
+              currentValue = opt; // still send the atom value back to Prolog
+              [...optionsWrap.children].forEach((c) =>
+                c.classList.remove("selected")
+              );
+              btn.classList.add("selected");
+            };
+            optionsWrap.appendChild(btn);
+          });
+          body.appendChild(optionsWrap);
+        } else {
+          const inputDiv = document.createElement("div");
+          inputDiv.className = "input-control";
+          const input = document.createElement("input");
+          input.type = q.inputType === "number" ? "number" : "text";
+          input.oninput = (e) => {
+            currentValue =
+              q.inputType === "number"
+                ? Number(e.target.value)
+                : e.target.value;
+          };
+          inputDiv.appendChild(input);
+          body.appendChild(inputDiv);
+        }
+
+        card.appendChild(body);
+
+        const footer = document.createElement("div");
+        footer.className = "card-footer";
+
+        const backBtn = document.createElement("button");
+        backBtn.textContent = "Back";
+        backBtn.className = "nav btn-secondary";
+        backBtn.onclick = onBack;
+        backBtn.disabled = history.length === 0;
+
+        const nextBtn = document.createElement("button");
+        nextBtn.textContent = "Next";
+        nextBtn.className = "nav btn-primary";
+        nextBtn.onclick = onNext;
+
+        footer.appendChild(backBtn);
+        footer.appendChild(nextBtn);
+        card.appendChild(footer);
+
+        currentQuestion = q;
+        currentValue = null;
+
+        return card;
       }
-      answers[currentQuestion.key] = currentValue;
-      history.push({ key: currentQuestion.key, value: currentValue });
 
-      const data = await fetchNext();
-      if (data.type === "question") {
-        showCard(createQuestionCard(data), "forward");
-      } else {
-        showCard(createResultCard(data), "forward");
+      function createResultCard(result) {
+        const card = document.createElement("div");
+        card.className = "card slide-in-right";
+
+        const title = document.createElement("div");
+        title.className = "card-title";
+        title.textContent = "Result";
+        card.appendChild(title);
+
+        const body = document.createElement("div");
+        body.className = "card-body";
+
+        const label = document.createElement("div");
+        label.className = "result-status " + result.status;
+        label.textContent = result.label;
+        body.appendChild(label);
+
+        const msg = document.createElement("div");
+        msg.textContent = result.message;
+        body.appendChild(msg);
+
+        card.appendChild(body);
+
+        const footer = document.createElement("div");
+        footer.className = "card-footer";
+
+        const backBtn = document.createElement("button");
+        backBtn.textContent = "Back";
+        backBtn.className = "nav btn-secondary";
+        backBtn.onclick = onBack;
+        backBtn.disabled = history.length === 0;
+
+        const restartBtn = document.createElement("button");
+        restartBtn.textContent = "Start Over";
+        restartBtn.className = "nav btn-primary";
+        restartBtn.onclick = () => {
+          answers = {};
+          history = [];
+          loadFirst();
+        };
+
+        footer.appendChild(backBtn);
+        footer.appendChild(restartBtn);
+        card.appendChild(footer);
+
+        currentQuestion = null;
+        currentValue = null;
+
+        return card;
       }
-    }
 
-    async function onBack() {
-      if (history.length === 0) return;
-      const last = history.pop();
-      delete answers[last.key];
-
-      const data = await fetchNext();
-      if (data.type === "question") {
-        showCard(createQuestionCard(data), "back");
-      } else {
-        showCard(createResultCard(data), "back");
+      function showCard(newCard, direction = "forward") {
+        const oldCard = cardWrapper.firstElementChild;
+        if (oldCard) {
+          oldCard.classList.remove("slide-in-right", "slide-in-active");
+          oldCard.classList.add(
+            direction === "forward" ? "slide-out-left" : "slide-out-right"
+          );
+          setTimeout(() => {
+            if (oldCard.parentNode) oldCard.parentNode.removeChild(oldCard);
+          }, 350);
+        }
+        cardWrapper.appendChild(newCard);
+        requestAnimationFrame(() => {
+          newCard.classList.remove("slide-in-right");
+          newCard.classList.add("slide-in-active");
+        });
       }
-    }
 
-    // boot once DOM is ready
-    window.addEventListener("DOMContentLoaded", loadFirst);
-  </script>
-</body>
+      async function loadFirst() {
+        const data = await fetchNext();
+        if (data.type === "question") {
+          showCard(createQuestionCard(data));
+        } else {
+          showCard(createResultCard(data));
+        }
+      }
+
+      async function onNext() {
+        if (!currentQuestion) return;
+        if (currentValue === null || currentValue === "") {
+          alert("Please select or fill in an answer.");
+          return;
+        }
+        answers[currentQuestion.key] = currentValue;
+        history.push({ key: currentQuestion.key, value: currentValue });
+
+        const data = await fetchNext();
+        if (data.type === "question") {
+          showCard(createQuestionCard(data), "forward");
+        } else {
+          showCard(createResultCard(data), "forward");
+        }
+      }
+
+      async function onBack() {
+        if (history.length === 0) return;
+        const last = history.pop();
+        delete answers[last.key];
+
+        const data = await fetchNext();
+        if (data.type === "question") {
+          showCard(createQuestionCard(data), "back");
+        } else {
+          showCard(createResultCard(data), "back");
+        }
+      }
+
+      // boot once DOM is ready
+      window.addEventListener("DOMContentLoaded", loadFirst);
+    </script>
+  </body>
 </html>
