@@ -1,6 +1,6 @@
 # Prolog-Based Reasoning on Parking Violations
 
-This project is an interactive **parking eligibility checker** for CSUF, powered by a Prolog reasoning engine and a simple web frontend.
+This project is an interactive **parking violation checker** for CSUF, powered by a Prolog reasoning engine and a simple web frontend.
 
 Users answer a short sequence of questions and the system uses Prolog rules to decide when it can be a parking violation.
 
