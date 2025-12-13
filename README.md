@@ -35,3 +35,14 @@ swipl -s server.pl -g start
 
 2. Open http://localhost:4000/ to access the working app
 
+
+## Example Queries
+
+```
+?- may_park_overnight(s8, time(mon, 2), false).
+?- overnight_violation(s8, time(mon, 2), false, 5, Reason).
+?- student_parking_violation(s8, 11, true, false,regular_space, none, none, none,blue, true, none, false,Reason).
+?- reparking_violation(f1_stall1, f1, 45, true).
+?- allowed_to_park(e7, X)
+```
+
