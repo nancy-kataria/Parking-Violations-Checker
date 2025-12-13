@@ -1,6 +1,6 @@
 # Prolog-Based Reasoning on Parking Violations
 
-This project is an interactive **parking eligibility checker** for CSUF, powered by a Prolog reasoning engine and a simple web frontend.
+This project is an interactive **parking violation checker** for CSUF, powered by a Prolog reasoning engine and a simple web frontend.
 
 Users answer a short sequence of questions and the system uses Prolog rules to decide when it can be a parking violation.
 
@@ -23,6 +23,7 @@ No Node, npm, or frameworks are required – the frontend is a plain HTML file.
 ├── parking_logic.pl        % decision tree + next_step/2 API
 ├── server.pl               % SWI-Prolog HTTP server
 └── index.html              % sliding-card frontend UI
+```
 
 ## 3. Running the App
 
@@ -30,7 +31,6 @@ No Node, npm, or frameworks are required – the frontend is a plain HTML file.
 
 ```
 swipl -s server.pl -g start
-
 ```
 
 2. Open http://localhost:4000/ to access the working app
