@@ -1,7 +1,3 @@
-% :- module(student_parking, [
-%    student_parking_violation/13
-% ]).
-
 % facts
 
 % Student lots (must be in one of these for normal student parking)
@@ -131,7 +127,7 @@ student_parking_violation(_Lot, _Hour,
                           blue_curb_disabled_only) :-
     HasDisabledPermit \== true.
 
-% Yellow: loading/unloading only (simplified: must be IsLoading = true
+% Yellow: loading/unloading only (simplified: must be IsLoading = true)
 student_parking_violation(_Lot, _Hour,
                           _HasStudentPermit, _HasDisabledPermit,
                           _Location, _DistFireHydrant, _DistBuilding, _DistRamp,
