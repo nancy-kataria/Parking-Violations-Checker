@@ -249,7 +249,7 @@
             btn.textContent = label;
 
             btn.onclick = () => {
-              currentValue = opt; // still send the atom value back to Prolog
+              currentValue = opt; // send the atom value back to Prolog
               [...optionsWrap.children].forEach((c) =>
                 c.classList.remove("selected")
               );

@@ -5,7 +5,7 @@
 :- use_module(library(http/http_json)).
 :- use_module(library(http/http_files)).
 
-:- ensure_loaded(parking_logic).     % your logic file
+:- ensure_loaded(parking_logic).
 
 % Serve the frontend at "/"
 :- http_handler(root(.), index_handler, []).
@@ -21,7 +21,7 @@ index_handler(Request) :-
     http_reply_file('index.html', [], Request).
 
 next_handler(Request) :-
-    % Convert all JSON strings into atoms so they match our parking_logic checks
+    % JSON strings to atoms so they match parking_logic checks
     http_read_json_dict(Request, In, [value_string_as(atom)]),
     (   _{answers:Answers} :< In
     ->  true
