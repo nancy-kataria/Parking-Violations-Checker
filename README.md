@@ -1,4 +1,5 @@
-# Prolog-Based Reasoning on Parking Violations
+# Parking-Violations-Checker
+### Prolog-Based Reasoning on Parking Violations
 
 This project is an interactive **parking violation checker** for CSUF, powered by a Prolog reasoning engine and a simple web frontend.
 
@@ -27,13 +28,18 @@ No Node, npm, or frameworks are required – the frontend is a plain HTML file.
 
 ## 3. Running the App
 
-1. Run the server
+1. Open the src folder
+```
+cd src
+```
+
+2. Run the server
 
 ```
 swipl -s server.pl -g start
 ```
 
-2. Open http://localhost:4000/ to access the working app
+3. Open http://localhost:4000/ to access the working app
 
 
 ## Example Queries
